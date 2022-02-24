@@ -249,7 +249,7 @@ class MBartAttention(nn.Module):
         value_states = value_states.view(*proj_shape)
 
         cross_attn_output = None
-        if prefix_state is not None and 'prefix' in self.attn_mode:
+        if prefix_state is not None and self.cache_key in prefix_state and 'prefix' in self.attn_mode:
             # legacy
             prefix_key = prefix_state.get(self.cache_key)['prev_key']  # bsz x nhead, attn_bn, head_dim
             prefix_value = prefix_state.get(self.cache_key)['prev_value']

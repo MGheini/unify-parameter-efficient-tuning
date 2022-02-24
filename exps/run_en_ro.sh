@@ -27,7 +27,8 @@ dataset="wmt16"
 
 # ----- MAM adapter -----
 attn_mode="prefix"
-attn_option="concat"
+# attn_option="concat"
+attn_option="only_xattn"
 attn_composition="add"
 attn_bn=30  # attn bottleneck dim
 

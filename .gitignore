@@ -161,3 +161,8 @@ tags
 
 # .lock
 *.lock
+
+# DS_Store (MacOS)
+.DS_Store
+
+mosesdecoder/

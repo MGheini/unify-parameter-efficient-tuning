@@ -2,7 +2,7 @@ import torch
 from transformers import PreTrainedModel
 import torch.nn as nn
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
-from petl.petl_factory import Prefix, MLP_Bias, Bias, PrefixDirectInit, PrefixCrossAttn
+from petl.petl_factory import Prefix, MLP_Bias, Bias, PrefixDirectInit, PrefixCrossAttn, XattnPrefix
 from transformers.utils import logging
 logger = logging.get_logger(__name__)
 
@@ -18,21 +18,21 @@ class PETLEncDecModel(PreTrainedModel):
         self.n_embd = config.d_model
         self.match_n_embd = self.n_embd // self.match_n_head
 
-        if "prefix" in args.attn_mode:
+        if 'prefix' in args.attn_mode:
             self.setup_prefix(args, config)
         elif args.attn_mode == 'bitfit' or args.attn_mode == 'adapter':
             self.get_prompt = self.get_fake_prompt
         elif args.attn_mode == 'none':
             # includes only with ffn mode
             self.get_prompt = self.get_fake_prompt
-        elif args.attn_mode == "prompt_tuning":
+        elif args.attn_mode == 'prompt_tuning':
             self.get_prompt = self.get_fake_prompt
-        elif args.attn_mode == "lora":
+        elif args.attn_mode == 'lora':
             self.get_prompt = self.get_fake_prompt
         else:
             raise ValueError
 
-        logger.info("Declare PrefixTuning model!")
+        logger.info('Declare PrefixTuning model!')
 
         not_freeze_set = []
         if args.unfreeze_params != 'none' and args.attn_mode != 'bitfit':
@@ -55,7 +55,7 @@ class PETLEncDecModel(PreTrainedModel):
 
         for n, p in self.pretrained_model.named_parameters():
             if len(not_freeze_set) > 0 and self.check_params(n, not_freeze_set, all_match=all_match):
-                print("tune "+ n)
+                print('tune ' + n)
                 p.requires_grad = True
             else:
                 p.requires_grad = False
@@ -66,8 +66,8 @@ class PETLEncDecModel(PreTrainedModel):
         # num_params_seq2seq = sum([p.numel() for n, p in self.seq2seq_model.named_parameters()])
         # num_params_pt = sum([p.numel() for n, p in self.seq2seq_model.named_parameters() if p.requires_grad])
         # num_params_pt = sum([p.numel() for n, p in self.prompt_model.named_parameters()])
-        # print("num_params_seq2seq = {}, num_params_pt = {}, ratio = {}".format(num_params_seq2seq, num_params_pt, num_params_pt*1.0/num_params_seq2seq))
-        logger.info("already freezed parameters!")
+        # print('num_params_seq2seq = {}, num_params_pt = {}, ratio = {}'.format(num_params_seq2seq, num_params_pt, num_params_pt*1.0/num_params_seq2seq))
+        logger.info('already froze parameters!')
         # input()
 
     def check_params(self, module_name, safe_list, all_match=True):
@@ -79,9 +79,11 @@ class PETLEncDecModel(PreTrainedModel):
         return self.prompt_model(bsz, nsamples, self.device)
 
     def setup_prefix(self, args, config):
-        if args.attn_mode == "prefix_nomlp":
+        if args.attn_mode == 'prefix_nomlp':
             self.prompt_model = PrefixDirectInit(args, config)
             # self.lisa_model = PrefixDirectInit(args, config)
+        elif args.attn_option == 'only_xattn':
+            self.prompt_model = XattnPrefix(args, config)
         else:
             self.prompt_model = Prefix(args, config)
             # self.lisa_model = Prefix(args, config)
