@@ -208,7 +208,7 @@ class PrefixCrossAttn(nn.Module):
         return result
 
 
-class XattnPrefix(nn.module):
+class XattnPrefix(nn.Module):
     def __init__(self, args, config):
         super().__init__()
 
