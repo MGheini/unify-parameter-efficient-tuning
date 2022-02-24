@@ -256,7 +256,7 @@ class MBartAttention(nn.Module):
             prefix_mask = prefix_state.get(self.cache_key)['prev_key_padding_mask']  # bsz, attn_bn: zeros
 
             # import pdb; pdb.set_trace()
-            if self.config.attn_option == 'concat':
+            if self.config.attn_option == 'concat' or self.config.attn_option == 'only_xattn':
                 # original lisa prefix-tuning
                 # if self.cache_key == "self":
                 #     key_states = torch.cat([key_states[:, 0, :].unsqueeze(1), prefix_key, key_states[:, 1:, :]], dim=1)
