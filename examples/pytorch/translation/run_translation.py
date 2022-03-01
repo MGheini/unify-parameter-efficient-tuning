@@ -540,8 +540,8 @@ def main():
             )
 
     # print(model)
-    # for n, p in model.named_parameters():
-    #     print(n, p.requires_grad)
+    for n, p in model.named_parameters():
+        print(n, p.requires_grad)
 
     # Metric
     metric = load_metric("sacrebleu")

@@ -1977,6 +1977,9 @@ class Trainer:
 
         checkpoints_sorted = sorted(ordering_and_checkpoint_path)
         checkpoints_sorted = [checkpoint[1] for checkpoint in checkpoints_sorted]
+        # In case the best checkpoint is another output_dir that we chose to resume from
+        if self.state.best_model_checkpoint not in checkpoints_sorted:
+            checkpoints_sorted.append(self.state.best_model_checkpoint)
         # Make sure we don't delete the best model.
         if self.state.best_model_checkpoint is not None:
             best_model_index = checkpoints_sorted.index(str(Path(self.state.best_model_checkpoint)))
@@ -1993,7 +1996,7 @@ class Trainer:
         if len(checkpoints_sorted) <= self.args.save_total_limit:
             return
 
-        # If save_total_limit=1 with load_best_mode_at_end=True, we could end up deleting the last checkpoint, which
+        # If save_total_limit=1 with load_best_model_at_end=True, we could end up deleting the last checkpoint, which
         # we don't do to allow resuming.
         save_total_limit = self.args.save_total_limit
         if (
