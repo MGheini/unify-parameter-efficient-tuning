@@ -67,6 +67,7 @@ class TuneArguments:
             "choices": ["none", 
                         "concat",
                         "only_xattn",
+                        "only_xattn_seq",
                         "cross_attn",
                         "cross_attn_noln",
                         "cross_attn_relu",
@@ -77,6 +78,7 @@ class TuneArguments:
             "help": "specific attn configs; \
                 concat: concat prefix to self, this is prefix tuning baseline; \
                 only_xattn: prefix tuning baseline, only on xattn heads \
+                only_xattn_seq: in case of adapter, only for xattn, seq mode\
                 cross_attn_noln: prefix tuning with vanilla add composition (instead of gated add) \
                 cross_attn: cross_attn_noln plus a layernorm layer \
                 cross_attn_relu: basically multi-head adapter; \

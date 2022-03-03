@@ -180,11 +180,17 @@ class MBartAttention(nn.Module):
                 self.ef_transform_layer_norm = nn.LayerNorm(embed_dim)
 
         elif self.attn_mode == 'adapter':
-            self.ef_attn_adapter = Adapter_Layer(self.config,
-                                                 dropout=self.dropout,
-                                                 bottleneck=self.config.attn_bn,
-                                                 adapter_layernorm_option="in",
-                                                 )
+            if self.attn_option == 'only_xattn_seq':
+                if self.cache_key == 'encoder_decoder':
+                    self.ef_attn_adapter = Adapter_Layer(self.config,
+                                                         dropout=self.dropout,
+                                                         bottleneck=self.config.attn_bn,
+                                                         adapter_layernorm_option="in",)
+            else:
+                self.ef_attn_adapter = Adapter_Layer(self.config,
+                                                     dropout=self.dropout,
+                                                     bottleneck=self.config.attn_bn,
+                                                     adapter_layernorm_option="in", )
         elif self.attn_mode != 'none':
                 raise ValueError("att_mode not supported")
 
@@ -307,6 +313,9 @@ class MBartAttention(nn.Module):
 
         if self.config.attn_mode == 'adapter' and self.config.attn_option == "parallel":
             cross_attn_output = self.ef_attn_adapter(hidden_states, add_residual=False)
+        elif self.config.attn_mode == 'adapter' and self.config.attn_option == "only_xattn_par":
+            if self.cache_key == 'encoder_decoder':
+                cross_attn_output = self.ef_attn_adapter(hidden_states, add_residual=False)
 
 
         src_len = key_states.size(1)
@@ -372,7 +381,7 @@ class MBartAttention(nn.Module):
         attn_output = attn_output.transpose(1, 2)
         attn_output = attn_output.reshape(bsz, tgt_len, embed_dim)
 
-        if cross_attn_output is not None:
+        if cross_attn_output is not None:  # I think prefix add or adapter parallel
             attn_output = attn_output + cross_attn_output
 
         attn_output = self.out_proj(attn_output)
@@ -380,6 +389,9 @@ class MBartAttention(nn.Module):
         # the Houlsby config
         if self.config.attn_mode == "adapter" and self.config.attn_option == "sequential":
             attn_output = self.ef_attn_adapter(attn_output, add_residual=True)
+        elif self.config.attn_mode == 'adapter' and self.config.attn_option == "only_xattn_seq":
+            if self.cache_key == 'encoder_decoder':
+                attn_output = self.ef_attn_adapter(attn_output, add_residual=True)
 
         return attn_output, attn_weights_reshaped, past_key_value
 
