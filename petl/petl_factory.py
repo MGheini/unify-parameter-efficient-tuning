@@ -236,6 +236,11 @@ class XattnPrefix(nn.Module):
             nn.Tanh(),
             nn.Linear(self.mid_dim, self.match_n_layer * 2 * self.n_embd))
 
+        self.enc_control_trans = nn.Sequential(
+            nn.Linear(self.n_embd, self.mid_dim),
+            nn.Tanh(),
+            nn.Linear(self.mid_dim, self.match_n_layer * 2 * self.n_embd))
+
         # if args.lisa_option == "cross_attn":
         #     self.apply(init_lisa_params)
 
@@ -251,12 +256,24 @@ class XattnPrefix(nn.Module):
         past_key_values = self.dropout(past_key_values)
         past_key_values = past_key_values.permute([2, 0, 3, 1, 4]).split(2)
 
+        enc_past_key_values = self.enc_control_trans(temp_control)  # bsz, seqlen, layer*emb
+        enc_past_key_values = enc_past_key_values.view(bsz, seqlen, self.match_n_layer * 2, self.match_n_head,
+                                                       self.match_n_embd)
+        enc_past_key_values = self.dropout(enc_past_key_values)
+        enc_past_key_values = enc_past_key_values.permute([2, 0, 3, 1, 4]).split(2)
+
         result = []
-        for i, key_val in enumerate(past_key_values):
-            temp_dict = {'encoder_decoder': {
-                "prev_key": key_val[0].contiguous().view(bsz*self.match_n_head, -1, self.match_n_embd),
-                "prev_value": key_val[1].contiguous().view(bsz*self.match_n_head, -1, self.match_n_embd),
-                "prev_key_padding_mask": torch.zeros(bsz, seqlen).to(key_val.device)  # bsz, attn_bn
+        for i, key_val in enumerate(past_key_values):  # over layers
+            temp_dict = {
+                'encoder_decoder': {
+                    "prev_key": key_val[0].contiguous().view(bsz*self.match_n_head, -1, self.match_n_embd),
+                    "prev_value": key_val[1].contiguous().view(bsz*self.match_n_head, -1, self.match_n_embd),
+                    "prev_key_padding_mask": torch.zeros(bsz, seqlen).to(key_val.device)  # bsz, attn_bn
+                },
+                'encoder': {
+                    "prev_key": enc_past_key_values[i][0].contiguous().view(bsz * self.match_n_head, -1, self.match_n_embd),
+                    "prev_value": enc_past_key_values[i][1].contiguous().view(bsz * self.match_n_head, -1, self.match_n_embd),
+                    "prev_key_padding_mask": torch.zeros(bsz, seqlen).to(enc_past_key_values[i].device)  # bsz, attn_bn
                 },
             }
             result.append(temp_dict)

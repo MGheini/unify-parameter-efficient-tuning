@@ -180,7 +180,7 @@ class MBartAttention(nn.Module):
                 self.ef_transform_layer_norm = nn.LayerNorm(embed_dim)
 
         elif self.attn_mode == 'adapter':
-            if self.config.attn_option == 'only_xattn_seq':
+            if self.config.attn_option == 'only_xattn_seq' or self.config.attn_option == 'only_xattn_par':
                 if self.cache_key == 'encoder_decoder':
                     self.ef_attn_adapter = Adapter_Layer(self.config,
                                                          dropout=self.dropout,
