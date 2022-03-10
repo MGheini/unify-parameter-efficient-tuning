@@ -256,8 +256,11 @@ class XattnPrefix(nn.Module):
         past_key_values = self.dropout(past_key_values)
         past_key_values = past_key_values.permute([2, 0, 3, 1, 4]).split(2)
 
-        enc_past_key_values = self.enc_control_trans(temp_control)  # bsz, seqlen, layer*emb
-        enc_past_key_values = enc_past_key_values.view(bsz, seqlen, self.match_n_layer * 2, self.match_n_head,
+        enc_input_tokens = self.input_tokens.unsqueeze(0).expand(old_bsz, -1).to(device)
+        enc_temp_control = self.wte(enc_input_tokens)
+        enc_past_key_values = self.enc_control_trans(enc_temp_control)  # bsz, seqlen, layer*emb
+        enc_bsz, _, _ = enc_past_key_values.shape
+        enc_past_key_values = enc_past_key_values.view(enc_bsz, seqlen, self.match_n_layer * 2, self.match_n_head,
                                                        self.match_n_embd)
         enc_past_key_values = self.dropout(enc_past_key_values)
         enc_past_key_values = enc_past_key_values.permute([2, 0, 3, 1, 4]).split(2)
@@ -273,7 +276,7 @@ class XattnPrefix(nn.Module):
                 'encoder': {
                     "prev_key": enc_past_key_values[i][0].contiguous().view(old_bsz*self.match_n_head, -1, self.match_n_embd),
                     "prev_value": enc_past_key_values[i][1].contiguous().view(old_bsz*self.match_n_head, -1, self.match_n_embd),
-                    "prev_key_padding_mask": torch.zeros(bsz, seqlen).to(enc_past_key_values[i].device)  # bsz, attn_bn
+                    "prev_key_padding_mask": torch.zeros(enc_bsz, seqlen).to(enc_past_key_values[i].device)  # bsz, attn_bn
                 },
             }
             result.append(temp_dict)
