@@ -271,8 +271,8 @@ class XattnPrefix(nn.Module):
                     "prev_key_padding_mask": torch.zeros(bsz, seqlen).to(key_val.device)  # bsz, attn_bn
                 },
                 'encoder': {
-                    "prev_key": enc_past_key_values[i][0].contiguous().view(bsz * self.match_n_head, -1, self.match_n_embd),
-                    "prev_value": enc_past_key_values[i][1].contiguous().view(bsz * self.match_n_head, -1, self.match_n_embd),
+                    "prev_key": enc_past_key_values[i][0].contiguous().view(old_bsz*self.match_n_head, -1, self.match_n_embd),
+                    "prev_value": enc_past_key_values[i][1].contiguous().view(old_bsz*self.match_n_head, -1, self.match_n_embd),
                     "prev_key_padding_mask": torch.zeros(bsz, seqlen).to(enc_past_key_values[i].device)  # bsz, attn_bn
                 },
             }
