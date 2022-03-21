@@ -548,6 +548,7 @@ def main():
     gen_prefix = "val"
 
     def postprocess_text(preds, labels):
+        # MOZHDEH: I'm not sure why these are required
         str_preds = [pred.strip() for pred in preds]
         str_labels = [label.strip() for label in labels]
 
